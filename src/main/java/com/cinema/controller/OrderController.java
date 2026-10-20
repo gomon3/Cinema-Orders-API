@@ -1,28 +1,42 @@
 package com.cinema.controller;
 
+import com.cinema.dto.CreateOrderRequest;
+import com.cinema.dto.UpdateOrderRequest;
+import com.cinema.model.Order;
 import com.cinema.service.OrderService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-/**
- * TODO: Implementar los endpoints REST.
- *
- * POST   /v1/countries/{country}/orders          - Crear una orden (201)
- * GET    /v1/countries/{country}/orders/{orderId} - Obtener una orden (200)
- * PATCH  /v1/countries/{country}/orders/{orderId} - Actualizar parcialmente (200)
- * DELETE /v1/countries/{country}/orders/{orderId} - Eliminar orden (204)
- *
- * Considerar:
- * - Códigos HTTP apropiados (201, 200, 204, 404, 400/409)
- * - Manejo de errores cuando la orden no existe
- * - Validar reglas de negocio desde el servicio
- */
 @RestController
 @RequestMapping("/v1/countries/{country}/orders")
 @RequiredArgsConstructor
 public class OrderController {
-
     private final OrderService orderService;
 
-    // TODO: Implementar endpoints
+    @PostMapping
+    public ResponseEntity<Order> create(@PathVariable String country, @RequestBody CreateOrderRequest request) {
+        Order order = orderService.createOrder(country, request);
+        var location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{orderId}").buildAndExpand(order.getOrderId()).toUri();
+        return ResponseEntity.created(location).body(order);
+    }
+
+    @GetMapping("/{orderId}")
+    public Order get(@PathVariable String country, @PathVariable String orderId) {
+        return orderService.getOrder(country, orderId);
+    }
+
+    @PatchMapping("/{orderId}")
+    public Order update(@PathVariable String country, @PathVariable String orderId,
+                        @RequestBody UpdateOrderRequest request) {
+        return orderService.updateOrder(country, orderId, request);
+    }
+
+    @DeleteMapping("/{orderId}")
+    public ResponseEntity<Void> delete(@PathVariable String country, @PathVariable String orderId) {
+        orderService.deleteOrder(country, orderId);
+        return ResponseEntity.noContent().build();
+    }
 }
