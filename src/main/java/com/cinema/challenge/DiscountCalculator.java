@@ -1,5 +1,10 @@
 package com.cinema.challenge;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * Ejercicio: Descuento por Combo
  *
@@ -33,7 +38,7 @@ package com.cinema.challenge;
 public class DiscountCalculator {
 
     /**
-     * TODO: Implementar
+     * Calcula el máximo explorando subconjuntos de combos.
      *
      * @param purchased productos comprados por el cliente
      * @param combos    cada combo es un array de productos requeridos
@@ -41,7 +46,35 @@ public class DiscountCalculator {
      * @return descuento total máximo aplicable
      */
     public int maxDiscount(String[] purchased, String[][] combos, int[] discounts) {
-        // Tu implementación aquí
-        return 0;
+        Map<String, Integer> available = new HashMap<>();
+        for (String product : purchased) {
+            available.merge(product, 1, Integer::sum);
+        }
+        List<Map<String, Integer>> requirements = new ArrayList<>();
+        for (String[] combo : combos) {
+            Map<String, Integer> counts = new HashMap<>();
+            for (String product : combo) {
+                counts.merge(product, 1, Integer::sum);
+            }
+            requirements.add(counts);
+        }
+        return search(0, available, requirements, discounts);
+    }
+
+    private int search(int index, Map<String, Integer> available,
+                       List<Map<String, Integer>> combos, int[] discounts) {
+        if (index == combos.size()) {
+            return 0;
+        }
+        int best = search(index + 1, available, combos, discounts);
+        Map<String, Integer> needed = combos.get(index);
+        boolean fits = needed.entrySet().stream()
+                .allMatch(entry -> available.getOrDefault(entry.getKey(), 0) >= entry.getValue());
+        if (fits) {
+            needed.forEach((product, count) -> available.merge(product, -count, Integer::sum));
+            best = Math.max(best, discounts[index] + search(index + 1, available, combos, discounts));
+            needed.forEach((product, count) -> available.merge(product, count, Integer::sum));
+        }
+        return best;
     }
 }
